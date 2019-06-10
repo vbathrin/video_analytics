@@ -260,5 +260,6 @@ pyvenv.cfg
 pip-selfcheck.json
 
 .vscode/
+.data/
 
  End of https://www.gitignore.io/api/c++,code,video,images,python,virtualenv
