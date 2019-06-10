@@ -1,7 +1,12 @@
 # video_analytics
 
+Command to get the docker initialized 
 docker run -dit -p 5000:8097 -p 8000:8000 -v /home/test/project/data/:/opt/data/ video-analytics:test
 
+Command to check the name of the docker that is running 
+```docker ps 
+
+Command to trigger a video or a RTSP link
 docker exec -it boring_pasteur bash -c "python3 demo.py --input=/opt/data/Dwell_185.mp4 --mode=0 --visualization=1 --stats=1"
 
 POST localhost:8000/setzone key-zone
