@@ -1,7 +1,7 @@
 # video_analytics
 
 Command to get the docker initialized 
-```docker run -dit -p 5000:8097 -p 8000:8000 -v /home/test/project/data/:/opt/data/ video-analytics:test```
+```docker run -dit -p 5000:8097 -p 8000:8000 -v /home/test/project/data/:/opt/data/ itoiretail/analytics:v4```
 
 Command to check the name of the docker that is running 
 ```docker ps ```
@@ -9,10 +9,9 @@ Command to check the name of the docker that is running
 Command to trigger a video or a RTSP link
 ```docker exec -it boring_pasteur bash -c "python3 demo.py --input=/opt/data/Dwell_185.mp4 --mode=0 --visualization=1 --stats=1" ```
 
-POST localhost:8000/setzone key-zone
+postman collection in here - https://www.getpostman.com/collections/88574ec6eb19aa50c998
 
-GET localhost:8000/getcount 
-
+Quick Help for the parameters:
 ```
     parser.add_argument( "--input"   ,type=str, help="path to video",required=True)
     parser.add_argument( "--visualization"   ,type=bool, help="displays live visualized output detections and tracking in a visdom",default=True)
