@@ -1,0 +1,20 @@
+FROM itoiretail/analytics:cpubase
+
+MAINTAINER Vasanth Bathrinarayanan <vasanth.bathrinarayanan@gmail.com>
+
+
+COPY . /opt/det_track/
+
+RUN cd /opt/det_track/ 
+ENV PYTHONPATH="/opt/det_track/"
+
+RUN pip3 install -r /opt/det_track/requirements.txt 
+
+WORKDIR /opt/det_track/
+RUN mkdir /opt/det_track/data
+RUN chmod +x /opt/det_track/entrypoint.sh
+
+ENTRYPOINT ["/opt/det_track/entrypoint.sh"]
+
+EXPOSE 8097 8000
+
