@@ -259,4 +259,6 @@ dmypy.json
 pyvenv.cfg
 pip-selfcheck.json
 
-# End of https://www.gitignore.io/api/c++,code,video,images,python,virtualenv
+.vscode/
+
+ End of https://www.gitignore.io/api/c++,code,video,images,python,virtualenv
