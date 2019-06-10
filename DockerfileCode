@@ -1,4 +1,4 @@
-FROM itoiretail/analytics:cpubase
+FROM itoiretail/analytics:base
 
 MAINTAINER Vasanth Bathrinarayanan <vasanth.bathrinarayanan@gmail.com>
 

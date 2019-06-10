@@ -32,6 +32,8 @@ class Detector(object):
                 with open(args.zones, mode='r') as zone_json:
                     self.zones = json.loads(zone_json.read())
                     (self.dwell, self.count) = read_zones(self.zones)
+                    with open('./data/zone.json', 'w') as outfile:
+                        json.dump(self.zones, outfile)
         else:
             self.zones = None
             self.dwell = None
