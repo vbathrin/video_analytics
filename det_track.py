@@ -14,8 +14,8 @@ import datetime
 import cv2
 from sort import *
 
-from heatmap.heatmap import add_heat
-from count.count import *
+from stats.heatmap import add_heat
+from stats.count import *
 
     
 

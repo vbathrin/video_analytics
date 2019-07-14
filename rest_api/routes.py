@@ -5,7 +5,7 @@ from flask import request, Response
 # from rest_api.api importfrom . import routes
 from flask import Flask , send_file
 from flask_cors import CORS, cross_origin
-from count.count import read_zones
+from stats.count import read_zones
 
 
 
@@ -20,7 +20,7 @@ import pandas as pd
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
-from count.count import *
+from stats.count import *
 from datetime import datetime, timezone, date, timedelta
 
 def do_count_rest():
