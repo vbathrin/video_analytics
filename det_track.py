@@ -17,6 +17,7 @@ from sort import *
 from stats.heatmap import add_heat
 from stats.count import *
 
+cv2.setNumThreads(1)    
 
 class Detector(object):
     def __init__(self, args,cam_uuid):
