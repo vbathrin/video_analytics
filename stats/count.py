@@ -85,13 +85,16 @@ def do_dwell(dwell_dict,dwell_zones):
     return(dwell_stats)
 
 
-
+#TODO remove hard coded value for pass mode to here
 
 def get_polygons(x):
     if x["shape_type"] == "polygon":
-        # print (x["points"])
         polygon = Polygon(x["points"])
-        return(polygon)
+        # print (polygon)
+        polyx, polyy = polygon.exterior.coords.xy
+        test = zip(list(np.array(polyx)/(800/480)),list(np.array(polyy)/(600/320)))
+        polygon_resize = Polygon(test)
+        return(polygon_resize)
            
            
 def check_point_inside(point,polygon):

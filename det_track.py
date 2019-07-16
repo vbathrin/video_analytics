@@ -45,7 +45,6 @@ class Detector(object):
         if os.path.isfile(default_location):
             with open(default_location, mode='r') as zone_json:
                 self.zones = json.loads(zone_json.read())
-                (self.dwell, self.count) = read_zones(self.zones)
 
     def open(self, args):
         if "rtsp" not in args.input:
@@ -63,11 +62,13 @@ class Detector(object):
         elif args.mode == 3:
             self.im_width = 320
             self.im_height = 240
-        if args.zones != None:
-            assert int(self.zones["imageWidth"]
-                    ) == self.im_width, "Error sizes doesnt match"
-            assert int(self.zones["imageHeight"]
-                    ) == self.im_height, "Error sizes doesnt match"
+        # if args.zones != None:
+        #     print(self.zones)
+        #     (self.dwell, self.count) = read_zones(self.zones,self.im_height,self.im_width)
+        #     # assert int(self.zones["imageWidth"]
+        #     #         ) == self.im_width, "Error sizes doesnt match"
+        #     # assert int(self.zones["imageHeight"]
+        #     #         ) == self.im_height, "Error sizes doesnt match"
                     
         return self.vdo.isOpened()
 
@@ -158,7 +159,7 @@ class Detector(object):
 
                 end2 = time.time()
                 
-                
+                #TODO - change the way of read/write to append in better dataformat
                 json_start_time = time.time()
                 if not os.path.exists(args.output):
                     with open(args.output, mode='w') as feedsjson:                        
@@ -183,13 +184,13 @@ class Detector(object):
                     self.update_zone()
                     if self.count != None:
                         ori_im = draw_count_zones(self.count, ori_im)
-                        entrance_counts,useless = do_count(args.output, self.count)
-                        print (entrance_counts)
+                        # entrance_counts,useless = do_count(args.output, self.count)
+                        # print (entrance_counts)
                     if self.dwell != None:
                         ori_im = draw_dwell_zones(self.dwell, ori_im)
-                        dwell_counts,id_dict_zone = do_count(args.output, self.dwell)
-                        dwell_stats = do_dwell(id_dict_zone,self.dwell)
-                        print (dwell_stats)
+                        # dwell_counts,id_dict_zone = do_count(args.output, self.dwell)
+                        # dwell_stats = do_dwell(id_dict_zone,self.dwell)
+                        # print (dwell_stats)
                 stats_end_time = time.time()
 
                 start3 = time.time()
@@ -218,7 +219,7 @@ class Detector(object):
                 print("fps stats: {}".format(1/(stats_end_time-stats_start_time)))
                 print("fps json: {}".format(1/(json_end_time-json_start_time)))
 
-                # print("fps vis: {}".format(1/(end3-start3)))
+                print("fps vis: {}".format(1/(end3-start3)))
 
                 time_end_frame = time.time()
                 sync_time = 1/self.vdo.get(cv2.CAP_PROP_FPS)-(time_end_frame - time_current_frame)
