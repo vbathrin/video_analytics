@@ -15,7 +15,7 @@ def parse_arguments(cliargs=None):
     parser = configargparse.ArgumentParser(
         default_config_files=[default_config], description='detector and tracker parameters')
     parser.add_argument( "--input"   ,type=str, help="path to video",required=True)
-    parser.add_argument( "--visualization"   ,type=bool, help="displays live visualized output detections and tracking in a visdom",default=True)
+    parser.add_argument( "--visualization"   ,type=bool, help="displays live visualized output detections and tracking in a visdom",default=False)
     parser.add_argument( "--zones"   ,type=str, help="path to zones files")
     parser.add_argument( "--stats"   ,type=bool, help="set true for computing zones information like count and dwell",default=True)
     parser.add_argument( "--threshold"   ,type=int, help="Area in pixel to which the less sized box are removed as noise",default=60)

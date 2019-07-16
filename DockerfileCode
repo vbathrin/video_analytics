@@ -7,6 +7,8 @@ COPY . /opt/det_track/
 
 RUN cd /opt/det_track/ 
 ENV PYTHONPATH="/opt/det_track/"
+ENV OPENBLAS_NUM_THREADS=1
+ENV MKL_NUM_THREADS=1
 
 RUN pip3 install -r /opt/det_track/requirements.txt 
 
