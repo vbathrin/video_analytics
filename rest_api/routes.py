@@ -23,10 +23,10 @@ from shapely.geometry.polygon import Polygon
 from stats.count import *
 from datetime import datetime, timezone, date, timedelta
 
-def do_count_rest():
+def do_count_rest(cam_uuid):
     
-    stats_file = "./data/stats.json"
-    zone_file = "./data/zone.json"
+    stats_file = "./data/" + cam_uuid + "_stats.json"
+    zone_file = "./data/" + cam_uuid + "_zone.json"
     if os.path.isfile(zone_file):
         with open(zone_file, mode='r') as zone_json:
             zones = json.loads(zone_json.read())
@@ -45,7 +45,7 @@ def do_count_rest():
     json_output['sensor-time']["timezone"] = str("UTC")
     json_output['status']["code"] = str("OK")
 
-    print (json_output)
+    # print (json_output)
 
     df = pd.read_json(stats_file)
     temp_data = []
@@ -147,12 +147,12 @@ def set_zone():
 @app.route('/getcount', methods=['GET'])
 def get_count():
     try:
-        count_zones,id_dict = do_count_rest()
-
+        cam_uuid = request.form["uuid"]
+        count_zones,id_dict = do_count_rest(cam_uuid)
+        
         return (json.dumps(count_zones), 200, {'Content-Type': 'application/json'})
 
     except Exception as e:
-      
         return json.dumps(e), 500, {'ContentType': 'application/json'}
 
 

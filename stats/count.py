@@ -92,7 +92,9 @@ def get_polygons(x):
         polygon = Polygon(x["points"])
         # print (polygon)
         polyx, polyy = polygon.exterior.coords.xy
+        # test = zip(list(np.array(polyx)/(800/320)),list(np.array(polyy)/(600/240)))
         test = zip(list(np.array(polyx)/(800/480)),list(np.array(polyy)/(600/320)))
+
         polygon_resize = Polygon(test)
         return(polygon_resize)
            

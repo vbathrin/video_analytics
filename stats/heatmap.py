@@ -3,7 +3,7 @@ import cv2
 import pandas as pd
 from scipy.ndimage import gaussian_filter
 
-def add_heat(data, base_image):
+def add_heat(data, base_image,uuid):
     
     df = pd.DataFrame()
     # df = df.from_dict(data)
@@ -28,6 +28,6 @@ def add_heat(data, base_image):
     imC = cv2.applyColorMap(heat_image.astype(np.uint8), cv2.COLORMAP_RAINBOW)
     overlay = cv2.addWeighted(base_image,0.7,imC,0.7,0)
 
-    cv2.imwrite("data/heat.jpg",cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR))
+    cv2.imwrite("data/"+uuid+"_heat.jpg",cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR))
     # heat_image = base_image
     return(overlay)

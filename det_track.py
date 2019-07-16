@@ -17,33 +17,40 @@ from sort import *
 from stats.heatmap import add_heat
 from stats.count import *
 
-    
 
 class Detector(object):
-    def __init__(self, args):
+    def __init__(self, args,cam_uuid):
         self.vdo = cv2.VideoCapture()
+        
         # self.vdo.set(cv2.CAP_PROP_FPS,100)
         self.frame_count = 0
         self.vis = visdom.Visdom()
         self.bgs = cv2.createBackgroundSubtractorMOG2()
-        self.track = Sort() 
+        self.track = Sort()
+        self.cam_uuid = cam_uuid
+         
         if args.zones != None:
+            zone_path = "./data/" + self.cam_uuid + "_zone.json"
             if os.path.isfile(args.zones):
                 with open(args.zones, mode='r') as zone_json:
                     self.zones = json.loads(zone_json.read())
                     (self.dwell, self.count) = read_zones(self.zones)
-                    with open('./data/zone.json', 'w') as outfile:
+                    with open(zone_path, 'w') as outfile:
                         json.dump(self.zones, outfile)
         else:
             self.zones = None
             self.dwell = None
             self.count = None
+            
 
     
     def update_zone(self):
-        default_location = "./data/zone.json"
-        if os.path.isfile(default_location):
-            with open(default_location, mode='r') as zone_json:
+        zone_path = "./data/" + self.cam_uuid + "_zone.json"
+        if os.path.isfile(zone_path):
+            with open(zone_path, mode='r') as zone_json:
+        # default_location = "./data/zone.json"
+        # if os.path.isfile(default_location):
+            # with open(default_location, mode='r') as zone_json:
                 self.zones = json.loads(zone_json.read())
 
     def open(self, args):
@@ -160,19 +167,21 @@ class Detector(object):
                 end2 = time.time()
                 
                 #TODO - change the way of read/write to append in better dataformat
+
                 json_start_time = time.time()
-                if not os.path.exists(args.output):
-                    with open(args.output, mode='w') as feedsjson:                        
+                stats_uuid = "./data/" + self.cam_uuid + "_stats.json"
+                if not os.path.exists(stats_uuid):
+                    with open(stats_uuid, mode='w') as feedsjson:
                         data = []
                         data.append(results)
                         feedsjson.write(json.dumps(
                             data, indent=4, sort_keys=False))
 
                 else:
-                    with open(args.output, mode='r') as feedsjson:
+                    with open(stats_uuid, mode='r') as feedsjson:
                         data = json.loads(feedsjson.read())
                         data.append(results)
-                    with open(args.output, mode='w') as feedsjson:
+                    with open(stats_uuid, mode='w') as feedsjson:
                         feedsjson.write(json.dumps(
                             data, indent=4, sort_keys=False))
 
@@ -196,7 +205,7 @@ class Detector(object):
                 start3 = time.time()
                 if args.visualization:
                     if self.frame_count % 100 == 0 or self.frame_count == 1:
-                        heat_map = add_heat(args.output, im)
+                        heat_map = add_heat(stats_uuid, im,self.cam_uuid)
                     if self.frame_count == 1:
                         reshaped = ori_im.transpose(2, 0, 1)
                         overlay_window = self.vis.image(reshaped)
@@ -213,13 +222,15 @@ class Detector(object):
                         reshaped_heat_map = heat_map.transpose(2, 0, 1)
                         self.vis.image(reshaped_heat_map, win=heatmap_window)
                 end3 = time.time()
-                print("fps bgs: {}".format(1/(end1-start1)))
-                print("fps track: {}".format(1/(end2-start2)))
+                # print("fps bgs: {}".format(1/(end1-start1)))
+                # print("fps track: {}".format(1/(end2-start2)))
                 print("fps e2e: {}".format(1/(end2-start1)))
-                print("fps stats: {}".format(1/(stats_end_time-stats_start_time)))
-                print("fps json: {}".format(1/(json_end_time-json_start_time)))
+                # print("fps stats: {}".format(1/(stats_end_time-stats_start_time)))
+                # print("fps json: {}".format(1/(json_end_time-json_start_time)))
 
-                print("fps vis: {}".format(1/(end3-start3)))
+                # print("fps vis: {}".format(1/(end3-start3)))
+
+                print("fps final: {}".format(1/(stats_end_time-start1)))
 
                 time_end_frame = time.time()
                 sync_time = 1/self.vdo.get(cv2.CAP_PROP_FPS)-(time_end_frame - time_current_frame)
