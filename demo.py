@@ -20,7 +20,7 @@ def parse_arguments(cliargs=None):
     parser.add_argument( "--stats"   ,type=bool, help="set true for computing zones information like count and dwell",default=True)
     parser.add_argument( "--threshold"   ,type=int, help="Area in pixel to which the less sized box are removed as noise",default=60)
     # parser.add_argument( "--mode"   ,type=int, help="modes changes with the processing size of the image 0-original 1-640*480, 2-480*320, 3-320*240, ",default=2)
-    parser.add_argument( "--output"   ,type=str, help="csv output file name",default="./data/stats.json")
+    # parser.add_argument( "--output"   ,type=str, help="csv output file name",default="./data/stats.json")
 
 
     if cliargs is None:
@@ -37,6 +37,7 @@ if __name__=="__main__":
     args = parse_arguments(sys.argv)
     cam_uuid = str(uuid.uuid4())
     print (cam_uuid)
+
     det = Detector(args,cam_uuid)
     det.open(args)
     det.detect(args)
