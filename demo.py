@@ -48,7 +48,7 @@ if __name__=="__main__":
             myfile.write(cam_uuid+","+args.input+"\n")
 
 
-    # det = Detector(args,cam_uuid)
-    # det.open(args)
-    # det.detect(args)
+    det = Detector(args,cam_uuid)
+    det.open(args)
+    det.detect(args)
     
