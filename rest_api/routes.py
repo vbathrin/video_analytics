@@ -141,8 +141,10 @@ def health():
 def set_zone():
     try:
         current_zone = request.files['zone'].read()
+        cam_uuid = request.form["uuid"]
         zones = json.loads(current_zone.decode('utf-8'))
-        with open('./data/zone.json', 'w') as outfile:
+        zone_file = "./data/" + cam_uuid + "_zone.json"
+        with open(zone_file, 'w') as outfile:
             json.dump(zones, outfile)
         return (json.dumps("updated ZONE"), 200, {'Content-Type': 'application/json'})
 
