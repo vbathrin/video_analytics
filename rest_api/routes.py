@@ -47,7 +47,11 @@ def do_count_rest(cam_uuid):
 
     # print (json_output)
 
-    df = pd.read_json(stats_file)
+    # df = pd.read_json(stats_file)
+    df = pd.read_json(stats_file,orient='records')
+    # df = df.sort_index()
+    # print(df)
+
     temp_data = []
     temp = {}
     id_dict = {}
@@ -60,61 +64,66 @@ def do_count_rest(cam_uuid):
         element = {}
         element["element-id"] = i["label"]
         element["measurement"] = {}
-        for index, item in df.data.items():
-            time_now = datetime.combine(date.today(),datetime.now().time())
-            time_processed = datetime.combine(date.today(),datetime.strptime(df.time[index],"%H:%M:%S.%f").time())
-            time_delta = time_now -time_processed
-            time_from = time_now - timedelta(minutes=1)
-            if (time_delta  < timedelta(minutes=1)):
+        if df.empty != True:
+            # print(df.data.items())
+            for index, item in df.iterrows():
 
-                if bool(item):
+            # for index, item in df.items():
+                # print(index, item)
+                time_now = datetime.combine(date.today(),datetime.now().time())
+                time_processed = datetime.combine(date.today(),datetime.strptime(df.time[index],"%H:%M:%S.%f").time())
+                time_delta = time_now -time_processed
+                time_from = time_now - timedelta(minutes=1)
+                if (time_delta  < timedelta(minutes=1)):
+                    # print(type(item))
+                    # print (item["x1"])
+                    # for boxes in item:
+                    # print ((boxes))
+                    # print (dict(boxes))
+                    x1 = int(float(item['x1']))
+                    y1 = int(float(item['y1']))
+                    x2 = int(float(item['x2']))
+                    y2 = int(float(item['y2']))
+                    person_id = int(float(item['id']))
+
+                    # print (x,y,w,h)
+                    # temp["foot_point"] = Point(round(y2),round((x2+x1)/2))
+                    temp["foot_point"] = Point(round((x2+x1)/2),round(y2))
+
+                    temp["id"] = person_id
+                    temp_data.append(temp)
+                    # print (temp)
                     
-                    for boxes in item:
-                        
-                        x1 = int(float(boxes['x1']))
-                        y1 = int(float(boxes['y1']))
-                        x2 = int(float(boxes['x2']))
-                        y2 = int(float(boxes['y2']))
-                        person_id = int(float(boxes['id']))
+                    if check_point_inside(temp,get_polygons(i)):
+                        if temp["id"] not in blacklist:
+                            counter = counter + 1
+                            blacklist.append(temp["id"])
+                            i["counter"] = str(counter)
+                            i["ids"] = str(blacklist)
+                            
 
-                        # print (x,y,w,h)
-                        # temp["foot_point"] = Point(round(y2),round((x2+x1)/2))
-                        temp["foot_point"] = Point(round((x2+x1)/2),round(y2))
-
-                        temp["id"] = person_id
-                        temp_data.append(temp)
-                        # print (temp)
-                        
-                        if check_point_inside(temp,get_polygons(i)):
-                            if temp["id"] not in blacklist:
-                                counter = counter + 1
-                                blacklist.append(temp["id"])
-                                i["counter"] = str(counter)
-                                i["ids"] = str(blacklist)
-                                
-
-                                id_dict[person_id] = {}
-                                id_dict[person_id]["start_time"] = str(df.time[index])
-                                id_dict[person_id]["zone_name"] = i["label"]
-                                
-                            else:
-                                id_dict[person_id]["end_time"] = str(df.time[index])
-        element["element-name"] = i["label"]
-        element["data-type"] = "ZONE"
-        element["resolution"] = "ONE_MINUTE"
-        element["sensor-type"] = "SINGLE_SENSOR"
-        element["from"] = str(time_from.replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ'))
-        element["to"] = str(time_now.replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ'))
-        element["measurement"]["from"] = str(time_from.replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ'))
-        element["measurement"]["to"] = str(time_now.replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ'))
-        element["measurement"]["value"]= []
-        counter_value = {}
-        counter_value["value"] = str(counter)
-        counter_value["label"] = "fw"
-        element["measurement"]["value"].append(counter_value)
+                            id_dict[person_id] = {}
+                            id_dict[person_id]["start_time"] = str(df.time[index])
+                            id_dict[person_id]["zone_name"] = i["label"]
+                            
+                        else:
+                            id_dict[person_id]["end_time"] = str(df.time[index])
+            element["element-name"] = i["label"]
+            element["data-type"] = "ZONE"
+            element["resolution"] = "ONE_MINUTE"
+            element["sensor-type"] = "SINGLE_SENSOR"
+            element["from"] = str(time_from.replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ'))
+            element["to"] = str(time_now.replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ'))
+            element["measurement"]["from"] = str(time_from.replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ'))
+            element["measurement"]["to"] = str(time_now.replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ'))
+            element["measurement"]["value"]= []
+            counter_value = {}
+            counter_value["value"] = str(counter)
+            counter_value["label"] = "fw"
+            element["measurement"]["value"].append(counter_value)
 
 
-        element_array.append(element)
+            element_array.append(element)
         
     json_output['content']['element'] = element_array
     return(json_output,id_dict)
@@ -156,6 +165,18 @@ def get_count():
         return json.dumps(e), 500, {'ContentType': 'application/json'}
 
 
+
+@app.route('/get_info', methods=['GET'])
+def get_camera_uuid():
+    try:
+        camera_uuid_file = "./data/camera_uuid.csv"
+        camera_df = pd.read_csv(camera_uuid_file,index_col=None,header=None)
+        camera_df.columns = ["uuid","video_source"]
+        # print (camera_df) 
+        return (camera_df.to_json(orient='records'), 200, {'Content-Type': 'application/json'})
+
+    except Exception as e:
+        return json.dumps(e), 500, {'ContentType': 'application/json'}
 
 
 @app.route('/getheatmap', methods=['GET'])

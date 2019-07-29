@@ -6,6 +6,7 @@ import sys
 import time
 from det_track import Detector
 import uuid
+import os.path
 
 def parse_arguments(cliargs=None):
 
@@ -37,8 +38,17 @@ if __name__=="__main__":
     args = parse_arguments(sys.argv)
     cam_uuid = str(uuid.uuid4())
     print (cam_uuid)
+    print (args.input)
+    camera_uuid_file = "./data/camera_uuid.csv"
+    if os.path.isfile(camera_uuid_file):
+        with open(camera_uuid_file, "a") as myfile:
+            myfile.write(cam_uuid+","+args.input+"\n")
+    else:
+        with open(camera_uuid_file, "w") as myfile:
+            myfile.write(cam_uuid+","+args.input+"\n")
 
-    det = Detector(args,cam_uuid)
-    det.open(args)
-    det.detect(args)
+
+    # det = Detector(args,cam_uuid)
+    # det.open(args)
+    # det.detect(args)
     
