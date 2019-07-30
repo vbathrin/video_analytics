@@ -52,6 +52,8 @@ def do_count_rest(cam_uuid):
     # df = df.sort_index()
     # print(df)
 
+    df = df.groupby('id').filter(lambda x : len(x)>3)
+
     temp_data = []
     temp = {}
     id_dict = {}

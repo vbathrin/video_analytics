@@ -96,7 +96,7 @@ class Detector(object):
                 # print (float(time_current_frame - time_end_frame))
             # print (int(self.vdo.get(cv2.CAP_PROP_POS_FRAMES)))
             # if (self.frame_count == 1) or float(time_current_frame - time_end_frame) > 1/6):
-            start1 = time.time()
+            startbgs = time.time()
             # print (time.time())
             _, resized_img = self.vdo.read()
 
@@ -131,10 +131,10 @@ class Detector(object):
             np_bb = np.asarray(bbox)
             indices = non_max_suppression(np_bb, 0.7)
             bbox = [bbox[i] for i in indices]
-            end1 = time.time()
+            endbgs = time.time()
             # print("detection fps: {}".format(1/(end1-start1)))
 
-            start2 = time.time()
+            trackstart = time.time()
             trackers = self.track.update(np_bb)
             # print(trackers)
             
@@ -160,60 +160,22 @@ class Detector(object):
                     df = df.append(pd.DataFrame.from_dict(results))
                 ori_im = draw_bboxes(
                     ori_im, bbox_xyxy, identities, offset=(xmin, ymin))
-            end2 = time.time()
+            trackend = time.time()
             
-
-            
-
-            # print((results))
-            # results["data"] = str(results["data"])
-
-            # print (pd.DataFrame.from_dict(results))
-            
+            dfstart = time.time()
             df = df.reset_index(drop=True)
-            # print(df.to_json(orient='index'))
             stats_uuid = "./data/" + self.cam_uuid + "_stats.json"
-            # df.to_pickle(stats_uuid)
-            # print (df)
             df.to_json(stats_uuid,orient='records')
             
-            # json_start_time = time.time()
-            # stats_uuid = "./data/" + self.cam_uuid + "_old.json"
-            # if not os.path.exists(stats_uuid):
-            #     with open(stats_uuid, mode='w') as feedsjson:
-            #         data = []
-            #         data.append(results)
-            #         feedsjson.write(json.dumps(
-            #             data, indent=4, sort_keys=False))
-
-            # else:
-            #     with open(stats_uuid, mode='r') as feedsjson:
-            #         data = json.loads(feedsjson.read())
-            #         data.append(results)
-            #     with open(stats_uuid, mode='w') as feedsjson:
-            #         feedsjson.write(json.dumps(
-            #             data, indent=4, sort_keys=False))
-
-            # json_end_time = time.time()
-            # stats_start_time = time.time()
-
-            # output = do_count_rest(self.cam_uuid)
-            # print (output)
+            dfend = time.time()
             if args.stats:
-
-                self.update_zone()
                 if self.count != None:
                     ori_im = draw_count_zones(self.count, ori_im)
-                    # entrance_counts,useless = do_count(args.output, self.count)
-                    # print (entrance_counts)
                 if self.dwell != None:
                     ori_im = draw_dwell_zones(self.dwell, ori_im)
-                    # dwell_counts,id_dict_zone = do_count(args.output, self.dwell)
-                    # dwell_stats = do_dwell(id_dict_zone,self.dwell)
-                    # print (dwell_stats)
             stats_end_time = time.time()
 
-            start3 = time.time()
+            visstart = time.time()
             if args.visualization:
                 # if self.frame_count % 100 == 0 or self.frame_count == 1:
                     # heat_map = add_heat(stats_uuid, im,self.cam_uuid)
@@ -232,18 +194,15 @@ class Detector(object):
                     self.vis.image(opening, win=bgs_window)
                     # reshaped_heat_map = heat_map.transpose(2, 0, 1)
                     # self.vis.image(reshaped_heat_map, win=heatmap_window)
-            end3 = time.time()
-            # print("fps bgs: {}".format(1/(end1-start1)))
-            # print("fps track: {}".format(1/(end2-start2)))
-            print("fps e2e: {}".format(1/(end2-start1)))
-            # print("fps stats: {}".format(1/(stats_end_time-stats_start_time)))
-            # print("fps json: {}".format(1/(json_end_time-json_start_time)))
-
-            # print("fps vis: {}".format(1/(end3-start3)))
-
-            print("fps final: {}".format(1/(stats_end_time-start1)))
-
+            visend = time.time()
+            print("fps bgs: {}".format(1/(endbgs-startbgs)))
+            print("fps track: {}".format(1/(trackend-trackstart)))
+            print("fps e2e: {}".format(1/(trackend-startbgs)))
+            print("fps df: {}".format(1/(dfend-dfstart)))
+            print("fps vis: {}".format(1/(visend-visstart)))
             time_end_frame = time.time()
+            print("fps final: {}".format(1/(time_end_frame-time_current_frame)))
+
             sync_time = 1/self.vdo.get(cv2.CAP_PROP_FPS)-(time_end_frame - time_current_frame)
             if (sync_time > 0):
                 print("sleeping", sync_time)
