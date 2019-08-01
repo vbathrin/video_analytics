@@ -23,6 +23,7 @@ from shapely.geometry.polygon import Polygon
 from stats.count import *
 from datetime import datetime, timezone, date, timedelta
 
+
 def do_count_rest(cam_uuid):
     
     stats_file = "./data/" + cam_uuid + "_stats.json"
@@ -51,9 +52,11 @@ def do_count_rest(cam_uuid):
     df = pd.read_json(stats_file,orient='records')
     # df = df.sort_index()
     # print(df)
-    if df.empty != True:
-        df = df.groupby('id').filter(lambda x : len(x)>3)
 
+    # Filter dataset for what is needed
+    if df.empty != True:
+        filtered_df = df.groupby('id').filter(lambda x : len(x)>3)
+    
     temp_data = []
     temp = {}
     id_dict = {}
@@ -61,71 +64,49 @@ def do_count_rest(cam_uuid):
     counter = 0
     blacklist = []
     element_array = []
-
+    
     for i in count_zones:
         element = {}
         element["element-id"] = i["label"]
         element["measurement"] = {}
+        current_timestamp = datetime.now().timestamp()
+        
+        dwell_array = []
         if df.empty != True:
-            # print(df.data.items())
-            for index, item in df.iterrows():
+            if filtered_df.empty != True:
+                mask = (filtered_df['epoch'] > current_timestamp - 60) & (filtered_df['epoch'] <= current_timestamp)
+                time_restricted_df = filtered_df.loc[mask]
+                relevent_df = time_restricted_df.loc[(time_restricted_df[i["label"]] == True)]
+                counter = len(relevent_df["id"].unique())
+                print ("count -- " , counter)
+                grouped_df = relevent_df.groupby('id')
+                for group_name, df_id in grouped_df:
+                    # print ("name",group_name,df_id["epoch"].max() - df_id["epoch"].min())
+                    dwell_array.append(df_id["epoch"].max() - df_id["epoch"].min())
+                    np_dwell = np.array(dwell_array)
+                avg_dwell = np.average(np_dwell[np_dwell > 2])
+                print ("avg_dwell -- " , avg_dwell)
 
-            # for index, item in df.items():
-                # print(index, item)
-                time_now = datetime.combine(date.today(),datetime.now().time())
-                time_processed = datetime.combine(date.today(),datetime.strptime(df.time[index],"%H:%M:%S.%f").time())
-                time_delta = time_now -time_processed
-                time_from = time_now - timedelta(minutes=1)
-                if (time_delta  < timedelta(minutes=1)):
-                    # print(type(item))
-                    # print (item["x1"])
-                    # for boxes in item:
-                    # print ((boxes))
-                    # print (dict(boxes))
-                    x1 = int(float(item['x1']))
-                    y1 = int(float(item['y1']))
-                    x2 = int(float(item['x2']))
-                    y2 = int(float(item['y2']))
-                    person_id = int(float(item['id']))
-
-                    # print (x,y,w,h)
-                    # temp["foot_point"] = Point(round(y2),round((x2+x1)/2))
-                    temp["foot_point"] = Point(round((x2+x1)/2),round(y2))
-
-                    temp["id"] = person_id
-                    temp_data.append(temp)
-                    # print (temp)
-                    
-                    if check_point_inside(temp,get_polygons(i)):
-                        if temp["id"] not in blacklist:
-                            counter = counter + 1
-                            blacklist.append(temp["id"])
-                            i["counter"] = str(counter)
-                            i["ids"] = str(blacklist)
-                            
-
-                            id_dict[person_id] = {}
-                            id_dict[person_id]["start_time"] = str(df.time[index])
-                            id_dict[person_id]["zone_name"] = i["label"]
-                            
-                        else:
-                            id_dict[person_id]["end_time"] = str(df.time[index])
-            element["element-name"] = i["label"]
-            element["data-type"] = "ZONE"
-            element["resolution"] = "ONE_MINUTE"
-            element["sensor-type"] = "SINGLE_SENSOR"
-            element["from"] = str(time_from.replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ'))
-            element["to"] = str(time_now.replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ'))
-            element["measurement"]["from"] = str(time_from.replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ'))
-            element["measurement"]["to"] = str(time_now.replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ'))
-            element["measurement"]["value"]= []
-            counter_value = {}
-            counter_value["value"] = str(counter)
-            counter_value["label"] = "fw"
-            element["measurement"]["value"].append(counter_value)
+                element["element-name"] = i["label"]
+                element["data-type"] = "ZONE"
+                element["resolution"] = "ONE_MINUTE"
+                element["sensor-type"] = "SINGLE_SENSOR"
+                element["from"] = str(time.strftime('%Y-%m-%dT%H:%M:%SZ',time.localtime(current_timestamp - 60)))
+                element["to"] = str(time.strftime('%Y-%m-%dT%H:%M:%SZ',time.localtime(current_timestamp)))
+                element["measurement"]["from"] = str(time.strftime('%Y-%m-%dT%H:%M:%SZ',time.localtime(current_timestamp - 60)))
+                element["measurement"]["to"] = str(time.strftime('%Y-%m-%dT%H:%M:%SZ',time.localtime(current_timestamp)))
+                element["measurement"]["value"]= []
+                counter_value = {}
+                counter_value["value"] = str(counter)
+                counter_value["label"] = "count"
+                dwell_value = {}
+                dwell_value["value"] = str(avg_dwell)
+                dwell_value["label"] = "stat"
+                element["measurement"]["value"].append(counter_value)
+                element["measurement"]["value"].append(dwell_value)
 
 
-            element_array.append(element)
+                element_array.append(element)
         
     json_output['content']['element'] = element_array
     return(json_output,id_dict)
