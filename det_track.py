@@ -17,8 +17,9 @@ from sort import *
 from stats.heatmap import add_heat
 from stats.count import *
 
-
+from shapely.geometry.polygon import Polygon
 from rest_api.routes import do_count_rest
+
 
 
 cv2.setNumThreads(1)    
@@ -145,6 +146,7 @@ class Detector(object):
                 results = {}
                 results["frame_count"] = [str(self.frame_count)]
                 results["time"] = [str(datetime.datetime.now().time())]
+                results["epoch"] = [str(datetime.datetime.now().timestamp())]
                 for val, count in enumerate(trackers):
                     #correct coords 
                     x1 = 0 if bbox_xyxy[val][0] < 0 else bbox_xyxy[val][0] 
@@ -157,6 +159,18 @@ class Detector(object):
                     results["y1"] = [str(y1)]
                     results["x2"] = [str(x2)]
                     results["y2"] = [str(y2)]
+                    results["footpoint"] = [str(Point(round((x2+x1)/2),round(y2)))]
+                    for i in self.dwell:
+                        results[i["label"]] = [""]
+                    for j in self.count:
+                        results[j["label"]] = [""]
+                    for dwell_zone in self.dwell:
+                        if get_polygons(dwell_zone).contains(Point(round((x2+x1)/2),round(y2))):
+                            results[dwell_zone["label"]] = True
+                    for count_zone in self.count:
+                        if get_polygons(count_zone).contains(Point(round((x2+x1)/2),round(y2))):
+                            results[count_zone["label"]] = True
+                    # print (df)
                     df = df.append(pd.DataFrame.from_dict(results))
                 ori_im = draw_bboxes(
                     ori_im, bbox_xyxy, identities, offset=(xmin, ymin))
@@ -167,6 +181,7 @@ class Detector(object):
             stats_uuid = "./data/" + self.cam_uuid + "_stats.json"
             df.to_json(stats_uuid,orient='records')
             
+            # do_count_rest(self.cam_uuid)
             dfend = time.time()
             if args.stats:
                 if self.count != None:
@@ -199,7 +214,7 @@ class Detector(object):
             print("fps track: {}".format(1/(trackend-trackstart)))
             print("fps e2e: {}".format(1/(trackend-startbgs)))
             print("fps df: {}".format(1/(dfend-dfstart)))
-            print("fps vis: {}".format(1/(visend-visstart)))
+            # print("fps vis: {}".format(1/(visend-visstart)))
             time_end_frame = time.time()
             print("fps final: {}".format(1/(time_end_frame-time_current_frame)))
 

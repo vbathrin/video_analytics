@@ -51,8 +51,8 @@ def do_count_rest(cam_uuid):
     df = pd.read_json(stats_file,orient='records')
     # df = df.sort_index()
     # print(df)
-
-    df = df.groupby('id').filter(lambda x : len(x)>3)
+    if df.empty != True:
+        df = df.groupby('id').filter(lambda x : len(x)>3)
 
     temp_data = []
     temp = {}
