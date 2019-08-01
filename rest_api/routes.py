@@ -57,12 +57,7 @@ def do_count_rest(cam_uuid):
     if df.empty != True:
         filtered_df = df.groupby('id').filter(lambda x : len(x)>3)
     
-    temp_data = []
-    temp = {}
-    id_dict = {}
-    all_ids = []
     counter = 0
-    blacklist = []
     element_array = []
     
     for i in count_zones:
@@ -109,7 +104,7 @@ def do_count_rest(cam_uuid):
                 element_array.append(element)
         
     json_output['content']['element'] = element_array
-    return(json_output,id_dict)
+    return(json_output)
 
 
 
@@ -142,7 +137,7 @@ def set_zone():
 def get_count():
     try:
         cam_uuid = request.form["uuid"]
-        count_zones,id_dict = do_count_rest(cam_uuid)
+        count_zones = do_count_rest(cam_uuid)
         
         return (json.dumps(count_zones), 200, {'Content-Type': 'application/json'})
 
