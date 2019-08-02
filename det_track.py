@@ -40,13 +40,15 @@ class Detector(object):
             if os.path.isfile(args.zones):
                 with open(args.zones, mode='r') as zone_json:
                     self.zones = json.loads(zone_json.read())
-                    (self.dwell, self.count) = read_zones(self.zones)
+                    (self.dwell, self.count,self.lines) = read_zones(self.zones)
                     with open(zone_path, 'w') as outfile:
                         json.dump(self.zones, outfile)
         else:
             self.zones = None
             self.dwell = None
             self.count = None
+            self.lines = None
+
             
 
     
@@ -188,6 +190,8 @@ class Detector(object):
                     ori_im = draw_count_zones(self.count, ori_im)
                 if self.dwell != None:
                     ori_im = draw_dwell_zones(self.dwell, ori_im)
+                if self.lines != None:
+                    ori_im = draw_lines(self.lines, ori_im)
             stats_end_time = time.time()
 
             visstart = time.time()
