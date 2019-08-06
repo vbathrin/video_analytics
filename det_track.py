@@ -18,11 +18,18 @@ from stats.heatmap import add_heat
 from stats.count import *
 
 from shapely.geometry.polygon import Polygon
-from rest_api.routes import do_count_rest
+# from rest_api.routes import do_count_rest
 
 
 cv2.setNumThreads(1)
 
+
+# import logging
+
+# logging.basicConfig(level=logging.INFO, format='%(message)s')
+# logger = logging.getLogger()
+# logger.addHandler(logging.FileHandler('test.log', 'a'))
+# print = logger.info
 
 def is_similar(image1, image2):
     return image1.shape == image2.shape and not(np.bitwise_xor(image1, image2).any())
@@ -143,7 +150,6 @@ class Detector(object):
             indices = non_max_suppression(np_bb, 0.7)
             bbox = [bbox[i] for i in indices]
             endbgs = time.time()
-            # print("detection fps: {}".format(1/(end1-start1)))
 
             trackstart = time.time()
             trackers = self.track.update(np_bb)
@@ -227,7 +233,7 @@ class Detector(object):
                     # reshaped_heat_map = heat_map.transpose(2, 0, 1)
                     # self.vis.image(reshaped_heat_map, win=heatmap_window)
             visend = time.time()
-            # print("vis: {}".format(1/(visend-visstart)))
+            # print()
             time_end_frame = time.time()
 
             sync_time = 1/self.vdo.get(cv2.CAP_PROP_FPS) - \
@@ -240,5 +246,6 @@ class Detector(object):
                     "track: {0:.0f}".format(1 / (trackend - trackstart)), \
                         "e2e: {0:.0f}".format(1 / (trackend - startbgs)), \
                             "df: {0:.0f}".format(1 / (dfend - dfstart)), \
-                                "final: {0:.2f}".format(1 / (time_end_frame - time_current_frame)), \
-                                    "sleeping: {0:.2f}".format(sync_time))
+                                "vis: {0:.0f}".format(1/(visend-visstart)), \
+                                    "final: {0:.2f}".format(1 / (time_end_frame - time_current_frame)), \
+                                        "sleeping: {0:.2f}".format(sync_time))

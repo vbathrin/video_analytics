@@ -24,16 +24,19 @@ from stats.count import *
 from datetime import datetime, timezone, date, timedelta
 
 
-def do_count_rest(cam_uuid,time_interval,min_dwell):
+def do_dwell_rest(cam_uuid,time_interval,min_dwell):
     
     stats_file = "./data/" + cam_uuid + "_stats.json"
     zone_file = "./data/" + cam_uuid + "_zone.json"
     if os.path.isfile(zone_file):
         with open(zone_file, mode='r') as zone_json:
             zones = json.loads(zone_json.read())
-            (dwell_zones, count_zones, lines) = read_zones(zones)
+            (dwell_zones, count_zones, _) = read_zones(zones)
+    else:
+        return("Error file not found", zone_file)
 
-
+    if not os.path.isfile(stats_file):
+        return("Error file not found", stats_file)
 
     json_output = {}
     json_output['sensor-info'] = {}
@@ -59,7 +62,6 @@ def do_count_rest(cam_uuid,time_interval,min_dwell):
     
     counter = 0
     element_array = []
-    
     for i in count_zones + dwell_zones:
         element = {}
         element["element-id"] = i["label"]
@@ -72,60 +74,53 @@ def do_count_rest(cam_uuid,time_interval,min_dwell):
                 element["measurement"] = []
                 element["element-name"] = i["label"]
                 element["data-type"] = "ZONE"
-                element["resolution"] = "ONE_MINUTE"
+                element["resolution"] = str(time_interval) + "_MINUTES"
                 element["sensor-type"] = "SINGLE_SENSOR"
                 element["from"] = str(time.strftime('%Y-%m-%dT%H:%M:%SZ',time.localtime(current_timestamp - 60*time_interval)))
                 element["to"] = str(time.strftime('%Y-%m-%dT%H:%M:%SZ',time.localtime(current_timestamp)))
-                # print(element)
-                for j in range(time_interval,0,-1): 
-                    print (j)
-                    # mask = (filtered_df['epoch'] > current_timestamp - 60) & (filtered_df['epoch'] <= current_timestamp)
-                    # print(mask)
-                    mask = (filtered_df['epoch'] > current_timestamp - 60*j) & (filtered_df['epoch'] <= current_timestamp - 60*(j-1))
-                    # print(mask)
-
-                    time_restricted_df = filtered_df.loc[mask]
-                    print(time_restricted_df)
-                    relevent_df = time_restricted_df.loc[(time_restricted_df[i["label"]] == True)]
-                    counter = len(relevent_df["id"].unique())
-                    print ("count -- " , counter)
-                    if counter > 0:
-                        grouped_df = relevent_df.groupby('id')
-                        for group_name, df_id in grouped_df:
-                            # print ("name",group_name,df_id["epoch"].max() - df_id["epoch"].min())
-                            dwell_array.append(df_id["epoch"].max() - df_id["epoch"].min())
-                            np_dwell = np.array(dwell_array)
-                        avg_dwell = np.average(np_dwell[np_dwell > min_dwell])
-                        print ("avg_dwell -- " , avg_dwell)
-                    else:
-                        avg_dwell = 0
-                        
-                    per_interval = {}
-                    per_interval["from"] = str(time.strftime('%Y-%m-%dT%H:%M:%SZ',time.localtime(current_timestamp - 60*j)))
-                    per_interval["to"] = str(time.strftime('%Y-%m-%dT%H:%M:%SZ',time.localtime(current_timestamp - 60*(j-1))))
-                    per_interval["value"]= []
-                    print(per_interval)
-
-                    counter_value = {}
-                    counter_value["value"] = str(counter)
-                    counter_value["label"] = "count"
-                    dwell_value = {}
-                    dwell_value["value"] = str(avg_dwell)
-                    dwell_value["label"] = "stat"
-                    print(counter_value)
-                    print(dwell_value)
-                    per_interval["value"].append(counter_value)
-                    per_interval["value"].append(dwell_value)
+                mask = (filtered_df['epoch'] > current_timestamp - 60*time_interval) & (filtered_df['epoch'] <= current_timestamp)
+                time_restricted_df = filtered_df.loc[mask]
+                relevent_df = time_restricted_df.loc[(time_restricted_df[i["label"]] == True)]
+                counter = len(relevent_df["id"].unique())
+                print ("count -- " , counter)
+                if counter > 0:
+                    grouped_df = relevent_df.groupby('id')
+                    for group_name, df_id in grouped_df:
+                        # print(df_id)
+                        # print ("name",group_name,df_id["epoch"].max() - df_id["epoch"].min())
+                        dwell_array.append(df_id["epoch"].max() - df_id["epoch"].min())
+                        np_dwell = np.array(dwell_array)
+                    filtered_dwell = np_dwell[np_dwell > min_dwell]
+                    avg_dwell = np.average(filtered_dwell)
+                    print ("avg_dwell -- " , avg_dwell)
+                    dwell_count = filtered_dwell.size
+                else:
+                    avg_dwell = 0
                     
+                per_interval = {}
+                per_interval["from"] = str(time.strftime('%Y-%m-%dT%H:%M:%SZ',time.localtime(current_timestamp - 60*time_interval)))
+                per_interval["to"] = str(time.strftime('%Y-%m-%dT%H:%M:%SZ',time.localtime(current_timestamp)))
+                per_interval["value"]= []
+                print(per_interval)
 
-                    element["measurement"].append(per_interval)
+                dwell_counter_value = {}
+                dwell_counter_value["value"] = str(dwell_count)
+                dwell_counter_value["label"] = "count"
+                dwell_value = {}
+                dwell_value["value"] = str(avg_dwell)
+                dwell_value["label"] = "stat"
+                print(dwell_counter_value)
+                print(dwell_value)
+                per_interval["value"].append(dwell_counter_value)
+                per_interval["value"].append(dwell_value)
+                
+
+                element["measurement"].append(per_interval)
                 print(element)
                 element_array.append(element)
         
     json_output['content']['element'] = element_array
     return(json_output)
-
-
 
 
 
@@ -152,6 +147,22 @@ def set_zone():
 
 
 
+@app.route('/getdwell', methods=['GET'])
+def get_dwell():
+    try:
+        cam_uuid = request.form["uuid"]
+        time_interval = int(request.form["time_interval"])
+        min_dwell = int(request.form["min_dwell"])
+        
+        json_count_zones = do_dwell_rest(cam_uuid,time_interval,min_dwell)
+        
+        return (json.dumps(json_count_zones), 200, {'Content-Type': 'application/json'})
+
+    except Exception as e:
+        return json.dumps(e), 500, {'ContentType': 'application/json'}
+
+
+
 @app.route('/getcount', methods=['GET'])
 def get_count():
     try:
@@ -165,6 +176,7 @@ def get_count():
 
     except Exception as e:
         return json.dumps(e), 500, {'ContentType': 'application/json'}
+
 
 
 
