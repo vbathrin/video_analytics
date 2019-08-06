@@ -1,6 +1,14 @@
 import numpy as np
 import cv2
 
+import numpy as np
+import pandas as pd
+
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon, LineString
+
+
+
 COLORS_10 =[(144,238,144),(178, 34, 34),(221,160,221),(  0,255,  0),(  0,128,  0),(210,105, 30),(220, 20, 60),
             (192,192,192),(255,228,196),( 50,205, 50),(139,  0,139),(100,149,237),(138, 43,226),(238,130,238),
             (255,  0,255),(  0,100,  0),(127,255,  0),(255,  0,255),(  0,  0,205),(255,140,  0),(255,239,213),
@@ -12,6 +20,101 @@ COLORS_10 =[(144,238,144),(178, 34, 34),(221,160,221),(  0,255,  0),(  0,128,  0
             (245,255,250),(240,230,140),(245,222,179),(  0,139,139),(143,188,143),(255,  0,  0),(240,128,128),
             (102,205,170),( 60,179,113),( 46,139, 87),(165, 42, 42),(178, 34, 34),(175,238,238),(255,248,220),
             (218,165, 32),(255,250,240),(253,245,230),(244,164, 96),(210,105, 30)]
+
+
+
+
+def read_zones(zone_file):
+
+    print("reading zones")
+    dwell_zones = []
+    count_lines = []
+
+    for x in zone_file["shapes"]:
+        if x["shape_type"] == "polygon":
+            dwell_zones.append(x)
+        if x["shape_type"] == "line":
+            count_lines.append(x)
+    return (dwell_zones, count_lines)
+
+
+def get_polygons(x):
+    if x["shape_type"] == "polygon":
+        polygon = Polygon(x["points"])
+        # print (polygon)
+        polyx, polyy = polygon.exterior.coords.xy
+        # test = zip(list(np.array(polyx)/(800/320)),list(np.array(polyy)/(600/240)))
+        test = zip(list(np.array(polyx)/(800/480)),
+                   list(np.array(polyy)/(600/320)))
+
+        polygon_resize = Polygon(test)
+        return(polygon_resize)
+
+    if x["shape_type"] == "line":
+        ls = LineString(x["points"])
+        polyx, polyy = ls.xy
+        # test = zip(list(np.array(polyx)/(800/320)),list(np.array(polyy)/(600/240)))
+        test = zip(list(np.array(polyx)/(800/480)),
+                   list(np.array(polyy)/(600/320)))
+
+        polygon_resize = LineString(test)
+        return(polygon_resize)
+
+
+def check_point_inside(point, polygon):
+    # print (point)
+    # print(polygon)
+    if polygon.contains(point["foot_point"]):
+        return True
+
+
+def draw_zones(dwell_zones, img, identity=None):
+    for i in dwell_zones:
+        polygon = get_polygons(i)
+        cv2.polylines(img, np.int32([polygon.exterior.coords]), 1,(0,0,255), thickness=2)
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+
+        bottomLeftCornerOfText = (
+            int(polygon.exterior.coords[0][0]), int(polygon.exterior.coords[0][1]))
+        fontScale = 0.5
+        fontColor = COLORS_10[0]
+        lineType = 1
+
+        cv2.putText(img, str(i["label"]),
+                    bottomLeftCornerOfText,
+                    font,
+                    fontScale,
+                    fontColor,
+                    lineType)
+    return img
+
+
+def draw_lines(lines, img, identity=None):
+    for i in lines:
+        ls = get_polygons(i)
+        if "bw" in i["label"]:
+            cv2.line(img, (int(ls.xy[0][0]), int(ls.xy[1][0])), (int(ls.xy[0][1]), int(ls.xy[1][1])),(255,0,0),2)
+        elif "fw" in i["label"]:  
+            cv2.line(img, (int(ls.xy[0][0]), int(ls.xy[1][0])), (int(ls.xy[0][1]), int(ls.xy[1][1])),(0,255,0),2)
+        else:
+            cv2.line(img, (int(ls.xy[0][0]), int(ls.xy[1][0])), (int(ls.xy[0][1]), int(ls.xy[1][1])),(0,0,0),2)
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+
+        # bottomLeftCornerOfText = (int(polygon.exterior.coords[0][0]), int(polygon.exterior.coords[0][1]))
+        # fontScale = 0.5
+        # fontColor = COLORS_10[0]
+        # lineType = 1
+
+        # cv2.putText(img, str(i["label"]),
+        #             bottomLeftCornerOfText,
+        #             font,
+        #             fontScale,
+        #             fontColor,
+        #             lineType)
+    return img
+    
 
 
 

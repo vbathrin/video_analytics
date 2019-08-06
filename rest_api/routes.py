@@ -5,7 +5,14 @@ from flask import request, Response
 # from rest_api.api importfrom . import routes
 from flask import Flask , send_file
 from flask_cors import CORS, cross_origin
-from stats.count import read_zones
+from util import read_zones
+
+import pandas as pd 
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
+from util import *
+from datetime import datetime, timezone, date, timedelta
+import time
 
 
 
@@ -15,15 +22,6 @@ CORS(app)
 
 
 
-import pandas as pd 
-
-from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
-
-from stats.count import *
-from datetime import datetime, timezone, date, timedelta
-
-
 def do_dwell_rest(cam_uuid,time_interval,min_dwell):
     
     stats_file = "./data/" + cam_uuid + "_stats.json"
@@ -31,7 +29,7 @@ def do_dwell_rest(cam_uuid,time_interval,min_dwell):
     if os.path.isfile(zone_file):
         with open(zone_file, mode='r') as zone_json:
             zones = json.loads(zone_json.read())
-            (dwell_zones, count_zones, _) = read_zones(zones)
+            (dwell_zones,_) = read_zones(zones)
     else:
         return("Error file not found", zone_file)
 
@@ -49,20 +47,14 @@ def do_dwell_rest(cam_uuid,time_interval,min_dwell):
     json_output['sensor-time']["timezone"] = str("UTC")
     json_output['status']["code"] = str("OK")
 
-    # print (json_output)
-
-    # df = pd.read_json(stats_file)
     df = pd.read_json(stats_file,orient='records')
-    # df = df.sort_index()
-    # print(df)
 
-    # Filter dataset for what is needed
     if df.empty != True:
         filtered_df = df.groupby('id').filter(lambda x : len(x)>3)
     
     counter = 0
     element_array = []
-    for i in count_zones + dwell_zones:
+    for i in dwell_zones:
         element = {}
         element["element-id"] = i["label"]
         element["measurement"] = {}

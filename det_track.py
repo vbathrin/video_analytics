@@ -15,7 +15,7 @@ import cv2
 from sort import *
 
 from stats.heatmap import add_heat
-from stats.count import *
+from util import *
 
 from shapely.geometry.polygon import Polygon
 # from rest_api.routes import do_count_rest
@@ -52,14 +52,12 @@ class Detector(object):
             if os.path.isfile(args.zones):
                 with open(args.zones, mode='r') as zone_json:
                     self.zones = json.loads(zone_json.read())
-                    (self.dwell, self.count, self.lines) = read_zones(self.zones)
+                    (self.dwell_zones, self.count_lines) = read_zones(self.zones)
                     with open(zone_path, 'w') as outfile:
                         json.dump(self.zones, outfile)
         else:
-            self.zones = None
-            self.dwell = None
-            self.count = None
-            self.lines = None
+            self.dwell_zones = None
+            self.count_lines = None
 
     def update_zone(self):
         zone_path = "./data/" + self.cam_uuid + "_zone.json"
@@ -179,16 +177,11 @@ class Detector(object):
                     results["fpx"] = [round((x2+x1)/2)]
                     results["fpy"] = [round(y2)]
 
-                    for i in self.dwell:
+                    for i in self.dwell_zones:
                         results[i["label"]] = [""]
-                    for j in self.count:
-                        results[j["label"]] = [""]
-                    for dwell_zone in self.dwell:
-                        if get_polygons(dwell_zone).contains(Point(round((x2+x1)/2), round(y2))):
-                            results[dwell_zone["label"]] = True
-                    for count_zone in self.count:
-                        if get_polygons(count_zone).contains(Point(round((x2+x1)/2), round(y2))):
-                            results[count_zone["label"]] = True
+                    for per_dwell_zone in self.dwell_zones:
+                        if get_polygons(per_dwell_zone).contains(Point(round((x2+x1)/2), round(y2))):
+                            results[per_dwell_zone["label"]] = True
                     # print (df)
                     df = df.append(pd.DataFrame.from_dict(results))
                 ori_im = draw_bboxes(
@@ -205,12 +198,10 @@ class Detector(object):
 
             visstart = time.time()
             if args.visualization:
-                if self.count != None:
-                    ori_im = draw_count_zones(self.count, ori_im)
-                if self.dwell != None:
-                    ori_im = draw_dwell_zones(self.dwell, ori_im)
-                if self.lines != None:
-                    ori_im = draw_lines(self.lines, ori_im)
+                if self.dwell_zones != None:
+                    ori_im = draw_zones(self.dwell_zones, ori_im)
+                if self.count_lines != None:
+                    ori_im = draw_lines(self.count_lines, ori_im)
 
 
             if False:
