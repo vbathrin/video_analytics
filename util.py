@@ -55,23 +55,6 @@ def non_max_suppression(boxes, max_bbox_overlap, scores=None):
 
     return pick
 
-
-def draw_bbox(img, box, cls_name, identity=None, offset=(0,0)):
-    '''
-        draw box of an id
-    '''
-    x1,y1,x2,y2 = [int(i+offset[idx%2]) for idx,i in enumerate(box)]
-    # set color and label text
-    color = COLORS_10[identity%len(COLORS_10)] if identity is not None else COLORS_10[0]
-    label = '{} {}'.format(cls_name, identity)
-    # box text and bar
-    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1 , 1)[0]
-    cv2.rectangle(img,(x1, y1),(x2,y2),color,2)
-    cv2.rectangle(img,(x1, y1),(x1+t_size[0]+3,y1+t_size[1]+4), color,-1)
-    cv2.putText(img,label,(x1,y1+t_size[1]+4), cv2.FONT_HERSHEY_PLAIN, 1, [255,255,255], 1)
-    return img
-
-
 def draw_bboxes(img, bbox, identities=None, offset=(0,0)):
     for i,box in enumerate(bbox):
         x1,y1,x2,y2 = [int(i) for i in box]
@@ -88,22 +71,3 @@ def draw_bboxes(img, bbox, identities=None, offset=(0,0)):
         cv2.rectangle(img,(x1, y1),(x1+t_size[0]+3,y1+t_size[1]+4), color,-1)
         cv2.putText(img,label,(x1,y1+t_size[1]+4), cv2.FONT_HERSHEY_PLAIN, 1, [255,255,255], 2)
     return img
-
-def softmax(x):
-    assert isinstance(x, np.ndarray), "expect x be a numpy array"
-    x_exp = np.exp(x*5)
-    return x_exp/x_exp.sum()
-
-def softmin(x):
-    assert isinstance(x, np.ndarray), "expect x be a numpy array"
-    x_exp = np.exp(-x)
-    return x_exp/x_exp.sum()
-
-
-
-# if __name__ == '__main__':
-#     x = np.arange(10)/10.
-#     x = np.array([0.5,0.5,0.5,0.6,1.])
-#     y = softmax(x)
-#     z = softmin(x)
-#     import ipdb; ipdb.set_trace()

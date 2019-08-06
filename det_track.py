@@ -202,19 +202,21 @@ class Detector(object):
 
             # do_count_rest(self.cam_uuid)
             dfend = time.time()
-            if args.stats:
+
+            visstart = time.time()
+            if args.visualization:
                 if self.count != None:
                     ori_im = draw_count_zones(self.count, ori_im)
                 if self.dwell != None:
                     ori_im = draw_dwell_zones(self.dwell, ori_im)
                 if self.lines != None:
                     ori_im = draw_lines(self.lines, ori_im)
-            stats_end_time = time.time()
+
+
             if False:
                 cv2.imwrite("./data/" + str(self.cam_uuid) + "_" +
                             str(self.frame_count) + ".jpg", ori_im)
 
-            visstart = time.time()
             if args.visualization:
                 # if self.frame_count % 100 == 0 or self.frame_count == 1:
                     # heat_map = add_heat(stats_uuid, im,self.cam_uuid)
