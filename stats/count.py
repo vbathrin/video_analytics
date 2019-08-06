@@ -23,7 +23,9 @@ def read_zones(zone_file):
             count_zones.append(x)
         if "dwell" in x["label"]:
             dwell_zones.append(x)
-        if "line" in x["label"]:
+        if "fw" in x["label"]:
+            lines.append(x)
+        if "bw" in x["label"]:
             lines.append(x)
     return (dwell_zones, count_zones, lines)
 
@@ -149,7 +151,10 @@ def draw_lines(lines, img, identity=None):
     # print (count_zones)
     for i in lines:
         ls = get_polygons(i)
-        cv2.line(img, (int(ls.xy[0][0]), int(ls.xy[1][0])), (int(ls.xy[0][1]), int(ls.xy[1][1])),(255,0,0),2)
+        if "fw" in i["label"]:
+            cv2.line(img, (int(ls.xy[0][0]), int(ls.xy[1][0])), (int(ls.xy[0][1]), int(ls.xy[1][1])),(255,0,0),2)
+        if "bw" in i["label"]:  
+            cv2.line(img, (int(ls.xy[0][0]), int(ls.xy[1][0])), (int(ls.xy[0][1]), int(ls.xy[1][1])),(0,255,0),2)
 
         font = cv2.FONT_HERSHEY_SIMPLEX
 
