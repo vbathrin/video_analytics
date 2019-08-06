@@ -49,7 +49,7 @@ def get_polygons(x):
 
         polygon_resize = Polygon(test)
         return(polygon_resize)
-
+    #TODO remove this which is just for draw and refactor
     if x["shape_type"] == "line":
         ls = LineString(x["points"])
         polyx, polyy = ls.xy
@@ -174,3 +174,33 @@ def draw_bboxes(img, bbox, identities=None, offset=(0,0)):
         cv2.rectangle(img,(x1, y1),(x1+t_size[0]+3,y1+t_size[1]+4), color,-1)
         cv2.putText(img,label,(x1,y1+t_size[1]+4), cv2.FONT_HERSHEY_PLAIN, 1, [255,255,255], 2)
     return img
+
+def get_lines_pairs(count_lines):
+    
+    line_dict = []
+    for x in count_lines:
+        if x["shape_type"] == "line":
+            if "fw" in x["label"]:
+                ls = LineString(x["points"])
+                polyx, polyy = ls.xy
+                test1 = zip(list(np.array(polyx)/(800/480)),
+                        list(np.array(polyy)/(600/320)))
+                fw_line = {}
+                fw_line["ls"] = LineString(test1)
+                fw_line["label"] = x["label"].replace("fw","")
+                fw_line["direction"] = "fw"
+                line_dict.append(fw_line)
+            if "bw" in x["label"]:
+                ls = LineString(x["points"])
+                polyx, polyy = ls.xy            
+                test2 = zip(list(np.array(polyx)/(800/480)),
+                        list(np.array(polyy)/(600/320)))
+
+                bw_line = {}
+                bw_line["ls"] = LineString(test2)
+                bw_line["label"] = x["label"].replace("bw","")
+                bw_line["direction"] = "bw"
+                line_dict.append(bw_line)
+    
+    line_df = pd.DataFrame(line_dict)
+    return(line_df)

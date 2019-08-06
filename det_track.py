@@ -19,17 +19,13 @@ from util import *
 
 from shapely.geometry.polygon import Polygon
 # from rest_api.routes import do_count_rest
+import logging
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
 cv2.setNumThreads(1)
 
 
-# import logging
-
-# logging.basicConfig(level=logging.INFO, format='%(message)s')
-# logger = logging.getLogger()
-# logger.addHandler(logging.FileHandler('test.log', 'a'))
-# print = logger.info
 
 def is_similar(image1, image2):
     return image1.shape == image2.shape and not(np.bitwise_xor(image1, image2).any())
@@ -58,6 +54,10 @@ class Detector(object):
         else:
             self.dwell_zones = None
             self.count_lines = None
+        
+        self.logger = logging.getLogger()
+        self.logger.addHandler(logging.FileHandler("./data/" + self.cam_uuid + ".log", 'a'))
+
 
     def update_zone(self):
         zone_path = "./data/" + self.cam_uuid + "_zone.json"
@@ -234,11 +234,24 @@ class Detector(object):
             if (sync_time > 0):
                 time.sleep(sync_time)
 
-            print("frame {}".format(self.frame_count), \
-                "fps bgs: {0:.0f}".format(1 / (endbgs - startbgs)), \
-                    "track: {0:.0f}".format(1 / (trackend - trackstart)), \
-                        "e2e: {0:.0f}".format(1 / (trackend - startbgs)), \
-                            "df: {0:.0f}".format(1 / (dfend - dfstart)), \
-                                "vis: {0:.0f}".format(1/(visend-visstart)), \
-                                    "final: {0:.2f}".format(1 / (time_end_frame - time_current_frame)), \
-                                        "sleeping: {0:.2f}".format(sync_time))
+            bgsfps = 1 / (endbgs - startbgs)
+            trackfps = 1 / (trackend - trackstart)
+            bgstrack = 1 / (trackend - startbgs)
+            dffps = 1 / (dfend - dfstart)
+            visfps = 1/(visend-visstart)
+            finalfps = 1 / (time_end_frame - time_current_frame)
+            
+            loginfo = [bgsfps,trackfps,bgstrack,dffps,visfps,finalfps]
+            # print("frame {}".format(self.frame_count), \
+            #     "fps bgs: {0:.0f}".format(bgsfps), \
+            #         "track: {0:.0f}".format(trackfps), \
+            #             "e2e: {0:.0f}".format(bgstrack), \
+            #                 "df: {0:.0f}".format(dffps), \
+            #                     "vis: {0:.0f}".format(visfps), \
+            #                         "final: {0:.2f}".format(finalfps), \
+            #                             "sleeping: {0:.2f}".format(sync_time))
+
+            with open("./data/" + self.cam_uuid + ".log", 'a') as the_file:
+                the_file.write(str(int(bgsfps))+","+str(int(trackfps))+","+str(int(bgstrack))+","+str(int(dffps))+","+str(int(visfps))+","+str(int(finalfps)) + "\n")
+
+
