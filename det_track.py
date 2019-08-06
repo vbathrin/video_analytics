@@ -23,8 +23,10 @@ from rest_api.routes import do_count_rest
 
 cv2.setNumThreads(1)
 
+
 def is_similar(image1, image2):
-        return image1.shape == image2.shape and not(np.bitwise_xor(image1,image2).any())
+    return image1.shape == image2.shape and not(np.bitwise_xor(image1, image2).any())
+
 
 class Detector(object):
     def __init__(self, args, cam_uuid):
@@ -33,7 +35,8 @@ class Detector(object):
         # self.vdo.set(cv2.CAP_PROP_FPS,100)
         self.frame_count = 0
         self.vis = visdom.Visdom()
-        self.bgs = cv2.createBackgroundSubtractorMOG2(history=500,varThreshold=16,detectShadows=True)
+        self.bgs = cv2.createBackgroundSubtractorMOG2(
+            history=500, varThreshold=16, detectShadows=True)
         self.track = Sort()
         self.cam_uuid = cam_uuid
 
@@ -86,21 +89,20 @@ class Detector(object):
 
         return self.vdo.isOpened()
 
-    
     def detect(self, args):
         xmin, ymin, xmax, ymax = self.area
         df = pd.DataFrame()
         while True:
-            
+
             self.frame_count = self.frame_count+1
-            print(self.frame_count)
+            # print(self.frame_count)
             time_current_frame = time.time()
-           
+
             startbgs = time.time()
             # print (time.time())
             _, resized_img = self.vdo.read()
 
-            #checker for same image 
+            # checker for same image
             # if self.frame_count == 1:
             #     previous_image = resized_img
             # else:
@@ -120,7 +122,6 @@ class Detector(object):
                 self.im_height = 240
             else:
                 ori_im = resized_img
-
 
             im = ori_im[ymin:ymax, xmin:xmax, (2, 1, 0)]
             fgmask = self.bgs.apply(im)
@@ -156,7 +157,7 @@ class Detector(object):
                 results["time"] = [str(datetime.datetime.now().time())]
                 results["epoch"] = [str(datetime.datetime.now().timestamp())]
                 for val, count in enumerate(trackers):
-                    #correct coords
+                    # correct coords
                     x1 = 0 if bbox_xyxy[val][0] < 0 else bbox_xyxy[val][0]
                     y1 = 0 if bbox_xyxy[val][1] < 0 else bbox_xyxy[val][1]
                     x2 = self.im_width - \
@@ -226,16 +227,18 @@ class Detector(object):
                     # reshaped_heat_map = heat_map.transpose(2, 0, 1)
                     # self.vis.image(reshaped_heat_map, win=heatmap_window)
             visend = time.time()
-            print("fps bgs: {}".format(1/(endbgs-startbgs)))
-            print("fps track: {}".format(1/(trackend-trackstart)))
-            print("fps e2e: {}".format(1/(trackend-startbgs)))
-            print("fps df: {}".format(1/(dfend-dfstart)))
-            # print("fps vis: {}".format(1/(visend-visstart)))
+            # print("vis: {}".format(1/(visend-visstart)))
             time_end_frame = time.time()
-            print("fps final: {}".format(1/(time_end_frame-time_current_frame)))
 
             sync_time = 1/self.vdo.get(cv2.CAP_PROP_FPS) - \
                 (time_end_frame - time_current_frame)
             if (sync_time > 0):
-                print("sleeping", sync_time)
                 time.sleep(sync_time)
+
+            print("frame {}".format(self.frame_count), \
+                "fps bgs: {0:.0f}".format(1 / (endbgs - startbgs)), \
+                    "track: {0:.0f}".format(1 / (trackend - trackstart)), \
+                        "e2e: {0:.0f}".format(1 / (trackend - startbgs)), \
+                            "df: {0:.0f}".format(1 / (dfend - dfstart)), \
+                                "final: {0:.2f}".format(1 / (time_end_frame - time_current_frame)), \
+                                    "sleeping: {0:.2f}".format(sync_time))
