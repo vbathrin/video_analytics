@@ -241,15 +241,14 @@ class Detector(object):
             visfps = 1/(visend-visstart)
             finalfps = 1 / (time_end_frame - time_current_frame)
             
-            loginfo = [bgsfps,trackfps,bgstrack,dffps,visfps,finalfps]
-            # print("frame {}".format(self.frame_count), \
-            #     "fps bgs: {0:.0f}".format(bgsfps), \
-            #         "track: {0:.0f}".format(trackfps), \
-            #             "e2e: {0:.0f}".format(bgstrack), \
-            #                 "df: {0:.0f}".format(dffps), \
-            #                     "vis: {0:.0f}".format(visfps), \
-            #                         "final: {0:.2f}".format(finalfps), \
-            #                             "sleeping: {0:.2f}".format(sync_time))
+            print("frame {}".format(self.frame_count), \
+                "fps bgs: {0:.0f}".format(bgsfps), \
+                    "track: {0:.0f}".format(trackfps), \
+                        "e2e: {0:.0f}".format(bgstrack), \
+                            "df: {0:.0f}".format(dffps), \
+                                "vis: {0:.0f}".format(visfps), \
+                                    "final: {0:.2f}".format(finalfps), \
+                                        "sleeping: {0:.2f}".format(sync_time))
 
             with open("./data/" + self.cam_uuid + ".log", 'a') as the_file:
                 the_file.write(str(int(bgsfps))+","+str(int(trackfps))+","+str(int(bgstrack))+","+str(int(dffps))+","+str(int(visfps))+","+str(int(finalfps)) + "\n")
